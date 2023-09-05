@@ -1,5 +1,5 @@
 package com.example.benchmark.optimized
-
+// Implementation is based on https://github.com/maxssoft/optimized-sequences
 /**
  * Optimized flatten sequence function
  *

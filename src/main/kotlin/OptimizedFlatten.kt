@@ -93,7 +93,7 @@ constructor(
     private val transformer: (T) -> R,
     private val iterator: (R) -> Iterator<E>
 ) : Sequence<E> {
-    override fun iterator(): Iterator<E> = object : AbstractIterator<E>() {
+    override fun iterator(): Iterator<E> = object : AbstractIteratorOpt<E>() {
         private val seqIter = sequence.iterator()
         private var iter: Iterator<E>? = null
 

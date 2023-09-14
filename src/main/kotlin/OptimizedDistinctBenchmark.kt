@@ -40,6 +40,9 @@ open class OptimizedDistinctBenchmark {
 
     @Benchmark
     fun optimized() = seq.optimizedDistinctBy { it }.last()
+
+    @Benchmark
+    fun modifiedStdlib() = seq.stdlibOptDistinctBy { it }.last()
 }
 
 

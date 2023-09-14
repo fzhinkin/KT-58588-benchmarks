@@ -22,8 +22,14 @@ private fun <T, R> Sequence<T>.optimizedFlatten(iterator: (T) -> Iterator<R>): S
     return OptimizedFlatteningSequence(this, { it }, iterator)
 }
 
+fun <T> Sequence<Iterable<T>>.builtFlatten(): Sequence<T> = sequence {
+    this@builtFlatten.forEach {
+        yieldAll(it)
+    }
+}
+
 // Empty iterator for cause when we haven't next element
-private object EmptyIterator: Iterator<Nothing> {
+private object EmptyIterator : Iterator<Nothing> {
     override fun hasNext(): Boolean = false
     override fun next(): Nothing = throw NoSuchElementException()
 }
@@ -80,3 +86,39 @@ constructor(
 private const val UNDEFINED_STATE = -1 // next item undefined
 private const val HAS_NEXT_ITEM = 0 // has next item
 private const val HAS_FINISHED = 1 // has finished iteration
+
+internal class OptimizedFlatteningSequenceUsingAbstractIterator<T, R, E>
+constructor(
+    private val sequence: Sequence<T>,
+    private val transformer: (T) -> R,
+    private val iterator: (R) -> Iterator<E>
+) : Sequence<E> {
+    override fun iterator(): Iterator<E> = object : AbstractIterator<E>() {
+        private val seqIter = sequence.iterator()
+        private var iter: Iterator<E>? = null
+
+        override fun computeNext() {
+            val it = iter
+            if (it != null && it.hasNext()) {
+                setNext(it.next())
+                return
+            }
+            while (seqIter.hasNext()) {
+                val next = iterator(transformer(seqIter.next()))
+                if (next.hasNext()) {
+                    iter = next
+                    setNext(next.next())
+                    return
+                }
+            }
+            done()
+        }
+    }
+
+}
+
+fun <T> Sequence<Iterable<T>>.optimizedFlatten4(): Sequence<T> = optimizedFlatten4 { it.iterator() }
+
+private fun <T, R> Sequence<T>.optimizedFlatten4(iterator: (T) -> Iterator<R>): Sequence<R> {
+    return OptimizedFlatteningSequenceUsingAbstractIterator(this, { it }, iterator)
+}

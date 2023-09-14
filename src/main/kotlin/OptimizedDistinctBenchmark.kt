@@ -6,8 +6,9 @@ import kotlin.random.Random
 @State(Scope.Benchmark)
 open class OptimizedDistinctBenchmark {
     private var list: List<Int> = emptyList()
+    private var seq: Sequence<Int> = list.asSequence()
 
-    @Param("100", "1000", "10000", "50000", "100000")
+    @Param("10", "100", "1000", "10000")
     var size: Int = 0
 
     @Param("same", "distinct", "mixed")
@@ -31,13 +32,14 @@ open class OptimizedDistinctBenchmark {
                 throw IllegalArgumentException(uniqueness)
             }
         }
+        seq = list.asSequence()
     }
 
     @Benchmark
-    fun stdlib() = list.asSequence().distinctBy { it }.last()
+    fun stdlib() = seq.distinctBy { it }.last()
 
     @Benchmark
-    fun custom() = list.asSequence().optimizedDistinctBy { it }.last()
+    fun optimized() = seq.optimizedDistinctBy { it }.last()
 }
 
 

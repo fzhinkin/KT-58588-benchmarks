@@ -32,6 +32,9 @@ open class OptimizedFlattenBenchmarkWithTypePollution {
 
     @Benchmark
     fun optimizedUsingAbstractIterator() = seq.optimizedFlatten4().lastOrNull()
+
+    @Benchmark
+    fun optimizedReworkedIterator() = seq.optimizedFlatten5().lastOrNull()
 }
 
 class Iterable0(private val size: Int) : Iterable<Int> {

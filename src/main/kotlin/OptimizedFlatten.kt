@@ -103,8 +103,9 @@ constructor(
                 setNext(it.next())
                 return
             }
-            while (seqIter.hasNext()) {
-                val next = iterator(transformer(seqIter.next()))
+            val sq = seqIter
+            while (sq.hasNext()) {
+                val next = iterator(transformer(sq.next()))
                 if (next.hasNext()) {
                     iter = next
                     setNext(next.next())
@@ -121,4 +122,64 @@ fun <T> Sequence<Iterable<T>>.optimizedFlatten4(): Sequence<T> = optimizedFlatte
 
 private fun <T, R> Sequence<T>.optimizedFlatten4(iterator: (T) -> Iterator<R>): Sequence<R> {
     return OptimizedFlatteningSequenceUsingAbstractIterator(this, { it }, iterator)
+}
+
+internal class FlatteningSequenceOpt<T, R, E>
+constructor(
+    private val sequence: Sequence<T>,
+    private val transformer: (T) -> R,
+    private val iterator: (R) -> Iterator<E>
+) : Sequence<E> {
+    private object State {
+        const val UNKNOWN = 0
+        const val READY = 1
+        const val DONE = 2
+    }
+
+    override fun iterator(): Iterator<E> = object : Iterator<E> {
+        val iterator = sequence.iterator()
+        var itemIterator: Iterator<E>? = null
+        private var state = State.UNKNOWN
+
+        override fun next(): E {
+            if (!ensureItemIterator())
+                throw NoSuchElementException()
+            state = State.UNKNOWN
+            return itemIterator!!.next()
+        }
+
+        override fun hasNext(): Boolean {
+            return ensureItemIterator()
+        }
+
+        private fun ensureItemIterator(): Boolean {
+            if (state == State.DONE) return false
+            if (state == State.READY) return true
+
+            val ii = itemIterator
+            if (ii != null && ii.hasNext()) {
+                state = State.READY
+                return true
+            }
+
+            while (iterator.hasNext()) {
+                val element = iterator.next()
+                val nextItemIterator = iterator(transformer(element))
+                if (nextItemIterator.hasNext()) {
+                    itemIterator = nextItemIterator
+                    state = State.READY
+                    return true
+                }
+            }
+
+            state = State.DONE
+            return false
+        }
+    }
+}
+
+fun <T> Sequence<Iterable<T>>.optimizedFlatten5(): Sequence<T> = optimizedFlatten5 { it.iterator() }
+
+private fun <T, R> Sequence<T>.optimizedFlatten5(iterator: (T) -> Iterator<R>): Sequence<R> {
+    return FlatteningSequenceOpt(this, { it }, iterator)
 }

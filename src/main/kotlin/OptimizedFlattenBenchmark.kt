@@ -32,6 +32,10 @@ open class OptimizedFlattenBenchmark {
 
     @Benchmark
     fun optimizedUsingAbstractIterator() = seq.optimizedFlatten4().lastOrNull()
+
+
+    @Benchmark
+    fun optimizedReworked() = seq.optimizedFlatten5().lastOrNull()
 }
 
 fun createListOfList(count: Int, countInternal: Int, emptySublistProbability: Double): List<List<Int>> {

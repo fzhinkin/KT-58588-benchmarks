@@ -142,20 +142,21 @@ constructor(
         private var state = State.UNKNOWN
 
         override fun next(): E {
-            if (!ensureItemIterator())
-                throw NoSuchElementException()
+            if (state == State.DONE) throw NoSuchElementException()
+            if (state == State.UNKNOWN) {
+                if (!ensureItemIterator()) throw NoSuchElementException()
+            }
             state = State.UNKNOWN
             return itemIterator!!.next()
         }
 
         override fun hasNext(): Boolean {
+            if (state == State.DONE) return false
+            if (state == State.READY) return true
             return ensureItemIterator()
         }
 
         private fun ensureItemIterator(): Boolean {
-            if (state == State.DONE) return false
-            if (state == State.READY) return true
-
             val ii = itemIterator
             if (ii != null && ii.hasNext()) {
                 state = State.READY
